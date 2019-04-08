@@ -1,115 +1,134 @@
-/******************************************************************************
- *	Program Author: Dr. Yongming Tang for CSCI 6810 Java and the Internet	  *
- *	Date: September, 2012													  *
- *******************************************************************************/
-
-import java.awt.event.ActionEvent;
 import java.io.*;
 import java.net.*;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import javax.swing.*;
-import java.awt.FlowLayout;
-import java.awt.event.ActionListener;
+import java.awt.*;     //including Java packages used by this program
+import java.awt.event.*;
 
-public class SocketClient extends JFrame implements ActionListener
-{
-    private static ObjectOutputStream oos;
-    private static ObjectInputStream ois;
+public class SocketClient {
 
-    private static JTextArea chatArea;
-    private JTextField textField;
-    private JLabel l1;
-    private JButton sendButton;
+	public static void main(String[] args) throws IOException {
 
+		JFrame f = new JFrame("Socket Client");
 
-    SocketClient()
-    {
-        BufferedReader in;
-        PrintWriter out;
-        setTitle("Client Machine");
-        chatArea = new JTextArea(22, 40);
-        JLabel l1 = new JLabel("Message");
-        textField = new JTextField(35);
-        sendButton = new JButton("Send");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new FlowLayout());
-        add(new JScrollPane(chatArea));
-      //JPanel LPanel=new JPanel();
-        add(l1);
-        add(textField);
-        add(sendButton);
-        setSize(470, 470);
-        setVisible(true);
-        chatArea.setEditable(false);
-        sendButton.addActionListener(this);
-        textField.addActionListener(this);
-    }
+		JButton sendButton = new JButton("Send");
+		JButton exitButton = new JButton("Exit");
 
-    public static void main(String[] args) throws IOException, UnknownHostException, IOException, ClassNotFoundException
-    {
-        JFrame frame = new SocketClient(); //initialize a JFrame object
-        frame.show(); //display the frame
-        Socket client;
-        oos = null;
-        ois = null;
+		JLabel clientMessageLabel, serverMessageLabel;
+		JLabel serverIPLabel, serverPortLabel;
 
-        if (args.length != 2) {
-            System.err.println("Usage: java SocketClient server port");
-            return;
-        }
-        try {
-            client = new Socket(args[0], Integer.parseInt(args[1]));
+		JTextField clientTextField = new JTextField();
+		JTextField serverTextField = new JTextField();
+		JTextField serverIPField = new JTextField();
+		JTextField serverPortField = new JTextField();
 
-            oos = new ObjectOutputStream(client.getOutputStream());
-            ois = new ObjectInputStream(client.getInputStream());
-        }
-        catch (UnknownHostException e) {
-            System.err.println("can't locate server: " + args[0]);
-            return;
-        }
-       // String s;
-      //  byte[] b = new byte[1024];
-        /* BufferedReader in = new BufferedReader(new InputStreamReader(sin)); */
-       // BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+		clientMessageLabel = new JLabel("Client Message");
+		serverMessageLabel = new JLabel("Server Message");
+		serverIPLabel = new JLabel("Server IP Address");
+		serverPortLabel = new JLabel("Server Port Number");
 
-        System.out.println("connection to " + args[0] + " established");
+		serverIPLabel.setBounds(50, 50, 150, 30);
+		serverIPField.setBounds(250, 50, 150, 30);
+		serverPortLabel.setBounds(50, 100, 150, 30);
+		serverPortField.setBounds(250, 100, 150, 30);
+		clientMessageLabel.setBounds(50, 150, 100, 30);
+		clientTextField.setBounds(200, 150, 200, 30);
+		serverMessageLabel.setBounds(50, 200, 100, 30);
+		serverTextField.setBounds(200, 200, 200, 30);
+		sendButton.setBounds(50, 250, 95, 30);
+		exitButton.setBounds(200, 250, 95, 30);
 
-//        do {
-//            System.out.print("> ");
-//            System.out.flush();
-//            s = in.readLine();
-//            if (s.length() == 0) continue;  // make sure it doesn’t hang
-//            oos.writeObject(s.getBytes());
-//            oos.flush();
-////            int i = (int) ois.readObject();
-////            System.out.write(b, 0, i);
-////            System.out.println();
-//        } while (!s.equals("exit"));
-    }
+		//Socket client;
+		//String IPAddress = serverIPField.getText();
+		//String PortNumber = serverPortField.getText();
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        String arg = e.getActionCommand();
+		//client = new Socket(IPAddress, Integer.valueOf(PortNumber));
 
-        if (arg.equals("Send")) { //determine which button is clicked
+		sendButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Socket client;
+				String IPAddress = serverIPField.getText();
+				String PortNumber = serverPortField.getText();
+				if(!IPAddress.equals("") && !PortNumber.equals("")) {
+					try {
+	     				client = new Socket(IPAddress, Integer.parseInt(PortNumber));
 
-            try {
-                oos.writeObject(textField.getText());
-                oos.flush();
-                String o = (String)ois.readObject();
-                chatArea.append(o);
-                chatArea.append("\n");
-                System.out.println("["+o+"]");
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            } catch (ClassNotFoundException e1) {
-                e1.printStackTrace();
-            }
-        }
-    }
+	     				ObjectOutputStream OOS = new ObjectOutputStream(client.getOutputStream());
+	     				String clientMsg = clientTextField.getText();
+	     				System.out.println(clientMsg);
+	     				OOS.writeObject(clientMsg);
+
+						ObjectInputStream OIS = new ObjectInputStream(client.getInputStream());
+						String serverMsg = (String) OIS.readObject();
+						System.out.println(serverMsg);
+      					serverTextField.setText(serverMsg);
+
+						OIS.close();
+						OOS.close();
+            			client.close();
+					} catch (UnknownHostException ex) {
+						System.err.println("can't locate server: " + IPAddress);
+						return;
+					} catch (IOException IOE) {
+						IOE.printStackTrace();
+					} catch (ClassNotFoundException CNFE) {
+						CNFE.printStackTrace();
+					}
+  				}
+			}
+		});
+
+		f.add(serverIPLabel);
+		f.add(serverIPField);
+		f.add(serverPortLabel);
+		f.add(serverPortField);
+		f.add(clientMessageLabel);
+		f.add(clientTextField);
+		f.add(serverMessageLabel);
+		f.add(serverTextField);
+		f.add(sendButton);
+		f.add(exitButton);
+
+		f.setSize(500, 350);
+		f.setLayout(null);
+		f.setVisible(true);
+
+		/*
+
+		Socket client;
+      InputStream sin = null;
+      OutputStream sout  = null;
+
+      if (args.length != 2) {
+	       System.err.println("Usage: java SocketClient server port");
+	       return;
+      }
+      try {
+	     client = new Socket(args[0], Integer.parseInt(args[1]));
+	     sin = client.getInputStream();
+	     sout = client.getOutputStream();
+      }
+      catch (UnknownHostException e) {
+         System.err.println("can't locate server: " + args[0]);
+	     return;
+      }
+      String s;
+      byte[] b = new byte[1024];
+      //BufferedReader in = new BufferedReader(new InputStreamReader(sin));
+      BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+
+      System.out.println("connection to " + args[0] + " established");
+      do {
+	      System.out.print("> ");
+	      System.out.flush();
+	      s = in.readLine();
+	      if (s.length() == 0) continue;  // make sure it doesn’t hang
+              sout.write(s.getBytes());
+	      sout.flush();
+	      int i = sin.read(b);
+	      System.out.write(b, 0, i);
+	      System.out.println();
+      } while (!s.equals("exit"));
+
+      */
+  }
 }
